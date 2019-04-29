@@ -1,1 +1,15 @@
-﻿
+﻿  pch.cpp
+  main.cpp
+a:\uni\github\c++\project\c---winsock--server-client-example-\game_server\consoleapplication1\main.cpp(44): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  Server.cpp
+a:\uni\github\c++\project\c---winsock--server-client-example-\game_server\consoleapplication1\server.cpp(74): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+a:\uni\github\c++\project\c---winsock--server-client-example-\game_server\consoleapplication1\server.cpp(213): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+a:\uni\github\c++\project\c---winsock--server-client-example-\game_server\consoleapplication1\server.cpp(266): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+a:\uni\github\c++\project\c---winsock--server-client-example-\game_server\consoleapplication1\server.cpp(270): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+a:\uni\github\c++\project\c---winsock--server-client-example-\game_server\consoleapplication1\server.cpp(401): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+a:\uni\github\c++\project\c---winsock--server-client-example-\game_server\consoleapplication1\server.cpp(409): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+a:\uni\github\c++\project\c---winsock--server-client-example-\game_server\consoleapplication1\server.cpp(436): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  Generating code
+  All 581 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  ConsoleApplication1.vcxproj -> A:\Uni\GITHUB\C++\Project\C---Winsock--Server-Client-example-\Game_Server\x64\Release\GameServer.exe

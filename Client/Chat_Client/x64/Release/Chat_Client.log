@@ -1,9 +1,11 @@
-﻿  pch.cpp
-  Chat_Client.cpp
-a:\uni\github\c++\project\chat_client\chat_client\chat_client.cpp(88): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-a:\uni\github\c++\project\chat_client\chat_client\chat_client.cpp(107): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(391,5): warning MSB8028: The intermediate directory (x64\Release\) contains files shared from another project (Chat_Client.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  pch.cpp
+  Client.cpp
+a:\uni\github\c++\project\c---winsock--server-client-example-\client\chat_client\client.cpp(61): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+a:\uni\github\c++\project\c---winsock--server-client-example-\client\chat_client\client.cpp(173): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+a:\uni\github\c++\project\c---winsock--server-client-example-\client\chat_client\client.cpp(229): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+a:\uni\github\c++\project\c---winsock--server-client-example-\client\chat_client\client.cpp(240): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
   Generating code
-a:\uni\github\c++\project\chat_client\chat_client\chat_client.cpp(142): warning C4715: 'join_server': not all control paths return a value
-  All 253 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  All 340 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   Finished generating code
-  Chat_Client.vcxproj -> A:\Uni\GITHUB\C++\Project\Chat_Client\x64\Release\Chat_Client.exe
+  Chat_Client.vcxproj -> A:\Uni\GITHUB\C++\Project\C---Winsock--Server-Client-example-\Client\x64\Release\Client.exe

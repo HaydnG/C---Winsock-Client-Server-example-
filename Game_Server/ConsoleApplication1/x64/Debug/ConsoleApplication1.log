@@ -1,8 +1,4 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(391,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (Chat.vcxproj, ConsoleApplication1.vcxproj).  This can lead to incorrect clean and rebuild behavior.
-  Server.cpp
-a:\uni\github\c++\project\c---winsock--server-client-example-\game_server\consoleapplication1\server.cpp(57): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-a:\uni\github\c++\project\c---winsock--server-client-example-\game_server\consoleapplication1\server.cpp(183): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-a:\uni\github\c++\project\c---winsock--server-client-example-\game_server\consoleapplication1\server.cpp(227): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-a:\uni\github\c++\project\c---winsock--server-client-example-\game_server\consoleapplication1\server.cpp(297): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-a:\uni\github\c++\project\c---winsock--server-client-example-\game_server\consoleapplication1\server.cpp(305): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  main.cpp
+a:\uni\github\c++\project\c---winsock--server-client-example-\game_server\consoleapplication1\main.cpp(46): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
   ConsoleApplication1.vcxproj -> A:\Uni\GITHUB\C++\Project\C---Winsock--Server-Client-example-\Game_Server\x64\Debug\GameServer.exe

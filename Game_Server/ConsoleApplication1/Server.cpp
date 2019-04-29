@@ -8,10 +8,26 @@ using namespace std;
 const string CLIENT_PREFIX =  "Client ";
 
 
-Server::Server(int x, int y) {
+Server::Server(int max, int min) {
 
-	MAX_CLIENTS = x;
-	MAX_SPECTATORS = y;
+	if (max > (MAX_CONNECTIONS / 2)) {
+		max = 10;
+	}
+
+	MAX_CLIENTS = max;
+
+	MAX_SPECTATORS = 4;
+
+	if (min < 1) {
+		MIN_CLIENTS = 1;
+	}
+	else if(min >= max) {
+		MIN_CLIENTS = max - 1;
+	}
+	else {
+		MIN_CLIENTS = min;
+	}
+
 
 	//Initialize the client list
 	for (int i = 0; i < MAX_CLIENTS + MAX_SPECTATORS + 1; i++)
@@ -25,6 +41,7 @@ int Server::process_client(client_type &new_client, thread &thread)
 {
 	//ping client
 	if (new_client.socket != INVALID_SOCKET) {
+		new_client.Detatched = 0;
 		ping(ref(new_client));
 
 	}
@@ -55,6 +72,13 @@ int Server::process_spectator(client_type &new_spectator, thread &thread)
 					new_spectator.id = temp_id;
 					msg = to_string(new_spectator.id);
 					send(new_spectator.socket, msg.c_str(), strlen(msg.c_str()), 0);
+
+					//Increment total spectators stat
+					total_specs++;
+					break;
+				}
+				else {
+					new_spectator.socket = INVALID_SOCKET;
 					break;
 				}
 			}
@@ -68,7 +92,8 @@ int Server::process_spectator(client_type &new_spectator, thread &thread)
 	}
 	//ping client
 	if (new_spectator.socket != INVALID_SOCKET && new_spectator.id != -1) {
-		
+		new_spectator.Detatched = 0;
+
 		ping(ref(new_spectator));
 	}
 	thread.detach();
@@ -118,8 +143,13 @@ int Server::CommandListener(client_type &new_client, thread &thread) {
 					new_client.socket = INVALID_SOCKET;
 					msg = CLIENT_PREFIX + '#' + to_string(temp_id) + GetPlayerType(new_client) + "has left the game." + GetCurrentSlots();
 
-					Broadcast(msg);
+					//Increment game disconnect count
+					Disconnects++;
+
+					Broadcast(msg, true, true);
 					Output(msg);
+
+					Broadcast("There is a free slot availible!", true, false);
 				
 
 
@@ -132,7 +162,7 @@ int Server::CommandListener(client_type &new_client, thread &thread) {
 					new_client.socket = INVALID_SOCKET;
 					msg = CLIENT_PREFIX + '#' + to_string(temp_id) + GetPlayerType(new_client) + "is attempting to switch from a spectator.";
 
-					Broadcast(msg);
+					Broadcast(msg, true, true);
 					Output(msg);
 
 
@@ -171,7 +201,7 @@ int Server::ping(client_type &new_client) {
 
 
 	msg = CLIENT_PREFIX + '#' + to_string(new_client.id) + " has joined as a" + GetPlayerType(new_client) + GetCurrentSlots();
-	Broadcast(msg);
+	Broadcast(msg, true, true);
 	Output(msg);
 	Sleep(5 * 1000);
 	while (1)
@@ -184,6 +214,8 @@ int Server::ping(client_type &new_client) {
 
 			if (Result != SOCKET_ERROR)
 			{
+				Log("Client #" + to_string(new_client.id) + " successfully responded to ping.");
+
 				ping = 0;
 			}
 			else
@@ -199,7 +231,11 @@ int Server::ping(client_type &new_client) {
 					new_client.socket = INVALID_SOCKET;
 					msg = CLIENT_PREFIX + '#' + to_string(temp_id) + GetPlayerType(new_client) + "has lost connection..." + GetCurrentSlots();
 
-					Broadcast(msg);
+					//Increment game disconnect count
+					Disconnects++;
+
+					Broadcast(msg, true, true);
+					Broadcast("There is a free slot availible!", true, false);
 					Output(msg);
 					
 					break;
@@ -217,14 +253,23 @@ int Server::ping(client_type &new_client) {
 	return 1;
 }
 
-int Server::Broadcast(string msg) {
+int Server::Broadcast(string msg, bool Spec, bool Client) {
 
 	string prefix = "text/";
 
 	for (int i = 0; i < MAX_CLIENTS + MAX_SPECTATORS; i++)
 	{
-		if (clients[i].socket != INVALID_SOCKET) {
-			send(clients[i].socket, (prefix + msg).c_str(), strlen(msg.c_str()) + strlen(prefix.c_str()), 0);	
+		if (clients[i].socket != INVALID_SOCKET && clients[i].Detatched !=1) {
+			
+			if (Spec) {
+				if (clients[i].SPECTATOR) 
+					send(clients[i].socket, (prefix + msg).c_str(), strlen(msg.c_str()) + strlen(prefix.c_str()), 0);
+			}
+			if (Client) {
+				if (!clients[i].SPECTATOR)
+					send(clients[i].socket, (prefix + msg).c_str(), strlen(msg.c_str()) + strlen(prefix.c_str()), 0);
+			}
+				
 		}
 	}
 	return 1;
@@ -244,7 +289,7 @@ void Server::UpdateConCount() {
 			num_spectators++;
 	}
 
-	Broadcast("There are " + to_string(MAX_CLIENTS - num_clients) + " availible slots left!");
+	
 }
 
 int Server::GetFreeID() {
@@ -262,20 +307,76 @@ int Server::GetFreeID() {
 	return temp_id;
 }
 
+
+//MAIN GAME LOOP
+int Server::GameRuntime() {
+	string msg;
+
+	while (1) {
+		UpdateConCount();
+		msg = "\nCurrently ("+ to_string( num_clients)+"/"+ to_string(MAX_CLIENTS) +") Clients       (" + to_string(num_spectators) + "/" + to_string(MAX_SPECTATORS) + ") Spectators";
+		Output(msg);
+		Broadcast(msg, true, true);
+
+		if (!((MIN_CLIENTS - num_clients) <=0)) {
+			if (RUNNING == true) {
+				msg = "Game ended - Not enough players - Game Duration<"+ to_string(gamelength) + " seconds> - Disconnects<" + to_string(Disconnects) + "> Total spectators joined<" + to_string(total_specs) + ">";
+				Output(msg);
+				Broadcast(msg, true, true);
+				RUNNING = false;
+				Disconnects = 0;
+				total_specs = 0;
+
+			}
+			else {
+				msg = "Waiting for " + to_string(MIN_CLIENTS - num_clients) + " more players to start the game.... \n";
+				Output(msg);
+				Broadcast(msg, true, true);
+			}
+			
+		}
+		else {
+			
+			if (RUNNING == false) {		
+				gamelength = 0;
+				RUNNING = true;
+			}
+			msg = "Game <" + GameModes[Game_mode] + ">" + " on Map<" + Maps[Map] + "> with Difficulty<" + Difficulties[Difficulty] + "> in Progress... <" + to_string(gamelength) + " seconds > \n";
+			Output(msg);
+			Broadcast(msg, true, true);
+			
+
+		
+		}
+
+		Sleep(10 * 1000);
+		gamelength += 10;
+		
+		
+	
+	}
+	
+
+	return 1;
+
+}
+
 int Server::Start() {
 	int temp_id = -1;
 	string msg = "";
 
-	
+	Server::GameProcess = thread(&Server::GameRuntime, this);
 
 
 	while (1)
 	{
 		SOCKET incoming = INVALID_SOCKET;
-		incoming = accept(socket, NULL, NULL);
+		incoming = accept(socket, NULL, NULL); 
 		temp_id = -1;
 
-		if (incoming != INVALID_SOCKET) {	
+		
+
+		if (incoming != INVALID_SOCKET && (num_clients + num_spectators) < (MAX_CLIENTS+ MAX_SPECTATORS)) {
 
 
 			//Update Client count
@@ -287,7 +388,7 @@ int Server::Start() {
 				clients[temp_id].socket = incoming;
 				clients[temp_id].id = temp_id;
 				clients[temp_id].SPECTATOR = 0;
-				clients[temp_id].Detatched = 0;
+				clients[temp_id].Detatched = 1;
 
 				//Update Client count
 				UpdateConCount();
@@ -317,7 +418,7 @@ int Server::Start() {
 					clients[temp_id].socket = incoming;
 					clients[temp_id].id = temp_id;
 					clients[temp_id].SPECTATOR = 1;
-					clients[temp_id].Detatched = 0;
+					clients[temp_id].Detatched = 1;
 
 					//Update Client count
 					UpdateConCount();
@@ -330,8 +431,17 @@ int Server::Start() {
 				}
 			}
 		}
+		else {
+			msg = "Server is full - NO spectator slots";
+			send(incoming, msg.c_str(), strlen(msg.c_str()), 0);
+			Output(msg);
+		
+		}
+
+
 	} //end while
 
+	
 	Close();
 }
 
@@ -345,4 +455,6 @@ void Server::Close() {
 		threads[i].detach();
 		closesocket(clients[i].socket);
 	}
+	Server::GameProcess.detach();
+	
 }

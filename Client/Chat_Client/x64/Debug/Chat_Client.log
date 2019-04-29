@@ -1,5 +1,5 @@
 ﻿  Client.cpp
-a:\uni\github\c++\project\c---winsock--server-client-example-\client\chat_client\client.cpp(124): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-a:\uni\github\c++\project\c---winsock--server-client-example-\client\chat_client\client.cpp(180): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-a:\uni\github\c++\project\c---winsock--server-client-example-\client\chat_client\client.cpp(191): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+a:\uni\github\c++\project\c---winsock--server-client-example-\client\chat_client\client.cpp(123): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+a:\uni\github\c++\project\c---winsock--server-client-example-\client\chat_client\client.cpp(179): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+a:\uni\github\c++\project\c---winsock--server-client-example-\client\chat_client\client.cpp(190): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
   Chat_Client.vcxproj -> A:\Uni\GITHUB\C++\Project\C---Winsock--Server-Client-example-\Client\x64\Debug\Client.exe

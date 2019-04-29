@@ -1,5 +1,3 @@
-// Chat_Client.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
 
 #include "pch.h"
 #include <winsock2.h>
@@ -8,14 +6,15 @@
 #include <string>
 #include <thread>
 #include <fstream>
+#include <algorithm>
 
 using namespace std;
 
 #pragma comment (lib, "Ws2_32.lib")
 
 #define DEFAULT_BUFLEN 512
-#define IP_ADDRESS "192.168.0.88"
-#define DEFAULT_PORT "3504"
+string IP;
+string PORT;
 
 ofstream log_file;
 
@@ -31,7 +30,52 @@ int process_client(client_type &new_client);
 int join_server();
 int Output(string msg);
 int CommandDispatcher(client_type &new_client);
+int ReadConfig();
+int GetOption();
 int main();
+
+int GetOption() {
+
+	int option = 0;
+	while (!(cin >> option)) {
+		cin.clear();
+		cin.ignore(256, '\n');
+
+	}
+	return option;
+
+}
+
+int ReadConfig() {
+	ifstream File("ip_config.txt");
+
+	if (File.is_open()) {
+		string Line;
+		while (getline(File, Line)) {
+			Line.erase(std::remove_if(Line.begin(), Line.end(), isspace), Line.end());
+			if (Line[0] == '#' || Line.empty())
+				continue;
+
+			int delimiterPos = Line.find("=");
+			string name = Line.substr(0, delimiterPos);
+			string value = Line.substr(delimiterPos + 1);
+
+			if (name == "ip" || name == "IP") {
+				IP = value;
+			}
+			else if (name == "port" || name == "PORT") {
+				PORT = value;
+			}
+		}
+
+		File.close();
+	}
+	else {
+		cerr << "Couldn't open config file for reading.\n";
+	}
+
+	return 1;
+}
 
 int join_server() {
 	struct addrinfo *result = NULL, hints;
@@ -41,19 +85,17 @@ int join_server() {
 	string response = "";
 	int Result = 0, CommandID = 8;
 
+	ReadConfig();
 
 	while (CommandID == 8) {
-
-
 		ZeroMemory(&hints, sizeof(hints));
 		hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
 		hints.ai_protocol = IPPROTO_TCP;
 		// Resolve the server address and port
-		Result = getaddrinfo(static_cast<PCSTR>(IP_ADDRESS), DEFAULT_PORT, &hints, &result);
+		Result = getaddrinfo(static_cast<PCSTR>(IP.c_str()), PORT.c_str(), &hints, &result);
 		if (Result != 0) {
 			log_file << "getaddrinfo() failed with error: " << Result << endl;
-			cout << "getaddrinfo() failed with error: " << Result << endl;
 			WSACleanup();
 			system("pause");
 			return 1;
@@ -65,7 +107,7 @@ int join_server() {
 			// Create a SOCKET for connecting to server
 			client.socket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
 			if (client.socket == INVALID_SOCKET) {
-				Output("socket() failed with error: " + WSAGetLastError());
+				log_file << "socket() failed with error : " << WSAGetLastError() << endl;
 				WSACleanup();
 				system("pause");
 				return 1;
@@ -74,7 +116,7 @@ int join_server() {
 			// Connect to server.
 			Result = connect(client.socket, result->ai_addr, (int)result->ai_addrlen);
 			if (Result == SOCKET_ERROR) {
-				Output("socket() failed with error: " + result->ai_family);
+				log_file << "socket() failed with error : " << result->ai_family << endl;
 				closesocket(client.socket);
 				client.socket = INVALID_SOCKET;
 				continue;
@@ -87,30 +129,35 @@ int join_server() {
 		if (client.socket == INVALID_SOCKET) {
 			Output("Unable to connect to server!");
 			WSACleanup();
-			system("pause");
 			return 1;
 		}
-
-
-
+		else {
+			cout << endl;
+			Output("Successfully connect to (" + IP + ":" + PORT + ")");
+			cout << endl;
+		}
 
 		//Obtain id from server for this client;
 		recv(client.socket, client.received_message, DEFAULT_BUFLEN, 0);
 		message = client.received_message;
 
-		if (message != "Server is full")
+
+		if (message == "Server is full - NO spectator slots") {
+			cout << message << endl;
+			cout << endl;
+			break;
+		}else if (message != "Server is full")
 		{
 			client.id = atoi(client.received_message);
 			client.SPECTATOR = 0;
 
 			thread runtime(process_client, ref(client));
 
-			cout << "Type 'quit' to leave." << endl;
+			cout << "Type 'quit' to leave." << endl << endl;
 
 			CommandID = CommandDispatcher(ref(client));
 			runtime.detach();
-		}
-		else {
+		}else {
 			cout << message << endl;
 			cout << endl;
 			cout << "Would you like to become a spectator? [Y/N]" << endl;
@@ -136,7 +183,7 @@ int join_server() {
 						thread runtime(process_client, ref(client));
 
 						cout << endl;
-						cout << "Type 'quit' to leave or 'join' to join if a slot availible." << endl;
+						cout << "Type 'quit' to leave or 'join' to join if a slot availible." << endl << endl;
 
 
 						CommandID = CommandDispatcher(ref(client));
@@ -228,6 +275,7 @@ int process_client(client_type &new_client){
 
 					if (prefix == "text") {
 						cout << message << endl;
+						log_file << message << endl;
 					}
 
 				}
@@ -261,26 +309,43 @@ int main()
 	WSAData wsa_data;
 	int iResult = 0;
 	int CommandID = 8;
+	int option = 0;
 	log_file.open("client_log.txt");
 
-	log_file << "Starting Client...\n";
-	cout << "Starting Client...\n";
 
-	// Initialize Winsock
-	iResult = WSAStartup(MAKEWORD(2, 2), &wsa_data);
-	if (iResult != 0) {
-		log_file << "WSAStartup() failed with error: " << iResult << endl;
-		cout << "WSAStartup() failed with error: " << iResult << endl;
-		return 1;
+	cout << "Select an option to proceed.." << endl;
+	cout << "0) Join" << endl;
+	cout << "1) Quit" << endl;
+	do {
+		cout << "Option: ";
+		option = GetOption();
+	} while (option < 0 || option >  1);
+
+	cout << endl << endl;
+
+	if (option == 0) {
+
+		log_file << "Starting Client...\n";
+		cout << "Starting Client...\n";
+
+		// Initialize Winsock
+		iResult = WSAStartup(MAKEWORD(2, 2), &wsa_data);
+		if (iResult != 0) {
+			log_file << "WSAStartup() failed with error: " << iResult << endl;
+			cout << "WSAStartup() failed with error: " << iResult << endl;
+			return 1;
+		}
+
+
+
+		log_file << "Connecting...\n";
+		cout << "Connecting...\n";
+		join_server();
+
 	}
-
+	else {
 	
-
-	log_file << "Connecting...\n";
-	cout << "Connecting...\n";
-	join_server();
-	
-
+	}
 	
 	WSACleanup();
 	system("pause");
