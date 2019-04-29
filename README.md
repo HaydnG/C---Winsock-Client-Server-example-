@@ -1,1 +1,1 @@
-# C++ Winsock (Server/Client example)
+# C++ Winsock (Client/Server example)
