@@ -24,124 +24,187 @@ struct client_type
 	SOCKET socket;
 	int id;
 	char received_message[DEFAULT_BUFLEN];
+	int SPECTATOR;
 };
 
 int process_client(client_type &new_client);
-int join_server(client_type &client, addrinfo *result);
+int join_server();
 int Output(string msg);
+int CommandDispatcher(client_type &new_client);
 int main();
 
-int join_server(client_type &client, addrinfo *result) {
-	struct addrinfo *ptr = NULL;
+int join_server() {
+	struct addrinfo *result = NULL, hints;
+	client_type client = { INVALID_SOCKET, -1, "" , 0 };
 	string message;
 	string sent_message = "";
 	string response = "";
-	int iResult = 0;
+	int Result = 0, CommandID = 8;
 
-	// Attempt to connect to an address until one succeeds
-	for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
 
-		// Create a SOCKET for connecting to server
-		client.socket = socket(ptr->ai_family, ptr->ai_socktype,ptr->ai_protocol);
-		if (client.socket == INVALID_SOCKET) {
-			Output("socket() failed with error: " + WSAGetLastError());
+	while (CommandID == 8) {
+
+
+		ZeroMemory(&hints, sizeof(hints));
+		hints.ai_family = AF_UNSPEC;
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_protocol = IPPROTO_TCP;
+		// Resolve the server address and port
+		Result = getaddrinfo(static_cast<PCSTR>(IP_ADDRESS), DEFAULT_PORT, &hints, &result);
+		if (Result != 0) {
+			log_file << "getaddrinfo() failed with error: " << Result << endl;
+			cout << "getaddrinfo() failed with error: " << Result << endl;
 			WSACleanup();
 			system("pause");
 			return 1;
 		}
 
-		// Connect to server.
-		iResult = connect(client.socket, ptr->ai_addr, (int)ptr->ai_addrlen);
-		if (iResult == SOCKET_ERROR) {
-			Output("socket() failed with error: " + ptr->ai_family);
-			closesocket(client.socket);
-			client.socket = INVALID_SOCKET;
-			continue;
+		// Attempt to connect to an address until one succeeds
+		for (result = result; result != NULL; result = result->ai_next) {
+
+			// Create a SOCKET for connecting to server
+			client.socket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+			if (client.socket == INVALID_SOCKET) {
+				Output("socket() failed with error: " + WSAGetLastError());
+				WSACleanup();
+				system("pause");
+				return 1;
+			}
+
+			// Connect to server.
+			Result = connect(client.socket, result->ai_addr, (int)result->ai_addrlen);
+			if (Result == SOCKET_ERROR) {
+				Output("socket() failed with error: " + result->ai_family);
+				closesocket(client.socket);
+				client.socket = INVALID_SOCKET;
+				continue;
+			}
+			break;
 		}
-		break;
+
+		freeaddrinfo(result);
+
+		if (client.socket == INVALID_SOCKET) {
+			Output("Unable to connect to server!");
+			WSACleanup();
+			system("pause");
+			return 1;
+		}
+
+
+
+
+		//Obtain id from server for this client;
+		recv(client.socket, client.received_message, DEFAULT_BUFLEN, 0);
+		message = client.received_message;
+
+		if (message != "Server is full")
+		{
+			client.id = atoi(client.received_message);
+			client.SPECTATOR = 0;
+
+			thread runtime(process_client, ref(client));
+
+			cout << "Type 'quit' to leave." << endl;
+
+			CommandID = CommandDispatcher(ref(client));
+			runtime.detach();
+		}
+		else {
+			cout << message << endl;
+			cout << endl;
+			cout << "Would you like to become a spectator? [Y/N]" << endl;
+			sent_message = "";
+
+			while (1) {
+
+				getline(cin, sent_message);
+
+				if (sent_message == "Y" || sent_message == "y" || sent_message == "N" || sent_message == "n") {
+					Result = send(client.socket, sent_message.c_str(), strlen(sent_message.c_str()), 0);
+
+					if (Result <= 0)
+					{
+						log_file << "send() failed: " << WSAGetLastError() << endl;
+						cout << "send() failed: " << WSAGetLastError() << endl;
+					}
+					else if (sent_message == "Y" || sent_message == "y") {
+						recv(client.socket, client.received_message, DEFAULT_BUFLEN, 0);
+						client.id = atoi(client.received_message);
+						client.SPECTATOR = 1;
+
+						thread runtime(process_client, ref(client));
+
+						cout << endl;
+						cout << "Type 'quit' to leave or 'join' to join if a slot availible." << endl;
+
+
+						CommandID = CommandDispatcher(ref(client));
+						runtime.detach();
+						break;
+					}
+				}
+			}
+		}
+
 	}
 
-	freeaddrinfo(result);
 
-	if (client.socket == INVALID_SOCKET) {
-		Output("Unable to connect to server!");
+	log_file << "Shutting down socket..." << endl;
+	cout << "Shutting down socket..." << endl;
+	Result = shutdown(client.socket, SD_SEND);
+	if (Result == SOCKET_ERROR) {
+		log_file << "shutdown() failed with error: " << WSAGetLastError() << endl;
+		cout << "shutdown() failed with error: " << WSAGetLastError() << endl;
+		closesocket(client.socket);
 		WSACleanup();
 		system("pause");
 		return 1;
 	}
 
-	Output("Successfully Connected");
+	closesocket(client.socket);
 
 
-	//Obtain id from server for this client;
-	recv(client.socket, client.received_message, DEFAULT_BUFLEN, 0);
-	message = client.received_message;
+	return 1;
+}
 
-	if (message != "Server is full")
+int CommandDispatcher(client_type &client) {
+	string response;
+
+	while (1)
 	{
-		client.id = atoi(client.received_message);
+		response = "";
+		getline(cin, response);
+		if (response == "quit" || response == "Quit") {
 
-		thread my_thread(process_client, ref(client));
+			send(client.socket, response.c_str(), strlen(response.c_str()), 0);
 
-		while (1)
-		{
-			getline(cin, sent_message);
-			iResult = send(client.socket, sent_message.c_str(), strlen(sent_message.c_str()), 0);
+			cout << "Closing game...." << endl;
 
-			if (iResult <= 0)
-			{
-				log_file << "send() failed: " << WSAGetLastError() << endl;
-				cout << "send() failed: " << WSAGetLastError() << endl;
-				break;
-			}
+			return 1;
 		}
 
-		//Shutdown the connection since no more data will be sent
-		my_thread.detach();
-	}
-	else {
+		if (client.SPECTATOR == 1) {
+		
+			if (response == "join" || response == "Join") {
 
-		cout << "Would you like to become a spectator? [Y/N]" << endl;
-		sent_message = "";
+				send(client.socket, response.c_str(), strlen(response.c_str()), 0);
 
-		while (1) {
+				cout << "Attempting to join game..." << endl;
+				cout << endl;
+				cout << endl;
 
-			getline(cin, sent_message);
+				client.id = -1;
+				client.socket = INVALID_SOCKET;
 
-			if (sent_message == "Y" || sent_message == "y" || sent_message == "N" || sent_message == "n") {
-				iResult = send(client.socket, sent_message.c_str(), strlen(sent_message.c_str()), 0);
-
-				if (iResult <= 0)
-				{
-					log_file << "send() failed: " << WSAGetLastError() << endl;
-					cout << "send() failed: " << WSAGetLastError() << endl;
-				}
-				else if (sent_message == "Y" || sent_message == "y") {
-					recv(client.socket, client.received_message, DEFAULT_BUFLEN, 0);
-					client.id = atoi(client.received_message);
-
-					thread my_thread(process_client, ref(client));
-
-					cout << "Type 'quit' to leave or 'join' to join if a slot availible" << endl;
-					while (1)
-					{
-						response = "";
-						getline(cin, response);
-						cout << response << endl;
-						if (response == "QUIT" || response == "quit") {
-
-							cout << "Closing game...." << endl;
-							my_thread.detach();
-							
-							return 1;
-						}
-					}
-					break;
-					//Shutdown the connection since no more data will be sent
-				}
+				return 8;
 			}
+		
+		
 		}
 	}
+
+
 }
 
 int process_client(client_type &new_client){
@@ -152,25 +215,37 @@ int process_client(client_type &new_client){
 	{
 		memset(new_client.received_message, 0, DEFAULT_BUFLEN);
 
-		if (new_client.socket != 0)
+		if (new_client.socket != INVALID_SOCKET)
 		{
 			int iResult = recv(new_client.socket, new_client.received_message, DEFAULT_BUFLEN, 0);
 
-			if (iResult != SOCKET_ERROR) {
-				message = new_client.received_message;
-				prefix = message.substr(0, message.find(delimiter));
-				message.erase(0, message.find(delimiter) + delimiter.length());
+			if (new_client.socket != INVALID_SOCKET) {
 
-				if (prefix == "text") {
-					cout << message << endl;
+				if (iResult != SOCKET_ERROR) {
+					message = new_client.received_message;
+					prefix = message.substr(0, message.find(delimiter));
+					message.erase(0, message.find(delimiter) + delimiter.length());
+
+					if (prefix == "text") {
+						cout << message << endl;
+					}
+
+				}
+				else
+				{
+					Output("Server not responding, closing.....");
+					break;
 				}
 
 			}
 			else
 			{
-				Output("Server not responding, closing.....");
 				break;
 			}
+		}
+		else
+		{
+			break;
 		}
 	}
 
@@ -184,9 +259,8 @@ int process_client(client_type &new_client){
 int main()
 {
 	WSAData wsa_data;
-	struct addrinfo *result = NULL, hints;
-	client_type client = { INVALID_SOCKET, -1, "" };
 	int iResult = 0;
+	int CommandID = 8;
 	log_file.open("client_log.txt");
 
 	log_file << "Starting Client...\n";
@@ -200,39 +274,14 @@ int main()
 		return 1;
 	}
 
-	ZeroMemory(&hints, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
+	
 
 	log_file << "Connecting...\n";
 	cout << "Connecting...\n";
+	join_server();
+	
 
-	// Resolve the server address and port
-	iResult = getaddrinfo(static_cast<PCSTR>(IP_ADDRESS), DEFAULT_PORT, &hints, &result);
-	if (iResult != 0) {
-		log_file << "getaddrinfo() failed with error: " << iResult << endl;
-		cout << "getaddrinfo() failed with error: " << iResult << endl;
-		WSACleanup();
-		system("pause");
-		return 1;
-	}
-
-	join_server(ref(client), result);
-
-	log_file << "Shutting down socket..." << endl;
-	cout << "Shutting down socket..." << endl;
-	iResult = shutdown(client.socket, SD_SEND);
-	if (iResult == SOCKET_ERROR) {
-		log_file << "shutdown() failed with error: " << WSAGetLastError() << endl;
-		cout << "shutdown() failed with error: " << WSAGetLastError() << endl;
-		closesocket(client.socket);
-		WSACleanup();
-		system("pause");
-		return 1;
-	}
-
-	closesocket(client.socket);
+	
 	WSACleanup();
 	system("pause");
 	return 0;

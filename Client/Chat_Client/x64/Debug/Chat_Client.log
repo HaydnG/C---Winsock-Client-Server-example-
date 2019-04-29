@@ -1,6 +1,5 @@
-﻿  pch.cpp
-  Client.cpp
-a:\uni\github\c++\project\chat_client\chat_client\client.cpp(89): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-a:\uni\github\c++\project\chat_client\chat_client\client.cpp(112): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-a:\uni\github\c++\project\chat_client\chat_client\client.cpp(145): warning C4715: 'join_server': not all control paths return a value
-  Chat_Client.vcxproj -> A:\Uni\GITHUB\C++\Project\Chat_Client\x64\Debug\Client.exe
+﻿  Client.cpp
+a:\uni\github\c++\project\c---winsock--server-client-example-\client\chat_client\client.cpp(124): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+a:\uni\github\c++\project\c---winsock--server-client-example-\client\chat_client\client.cpp(180): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+a:\uni\github\c++\project\c---winsock--server-client-example-\client\chat_client\client.cpp(191): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  Chat_Client.vcxproj -> A:\Uni\GITHUB\C++\Project\C---Winsock--Server-Client-example-\Client\x64\Debug\Client.exe

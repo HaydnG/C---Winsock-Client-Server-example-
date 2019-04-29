@@ -9,7 +9,7 @@
 #define DEFAULT_PORT "3504"
 #define DEFAULT_BUFLEN 512
 //Server limit
-#define MAX_CONNECTIONS 10
+#define MAX_CONNECTIONS 20
 
 using namespace std;
 
@@ -19,6 +19,7 @@ struct client_type {
 	int id;
 	SOCKET socket;
 	int SPECTATOR;
+	int Detatched;
 };
 
 class Server {
