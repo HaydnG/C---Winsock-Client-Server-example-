@@ -1,0 +1,3 @@
+﻿  ConsoleApplication1.cpp
+c:\users\andré\source\repos\consoleapplication1\consoleapplication1\consoleapplication1.cpp(119): error C2440: 'static_cast': cannot convert from 'const char [14]' to 'LPCTSTR'
+  c:\users\andré\source\repos\consoleapplication1\consoleapplication1\consoleapplication1.cpp(119): note: Types pointed to are unrelated; conversion requires reinterpret_cast, C-style cast or function-style cast

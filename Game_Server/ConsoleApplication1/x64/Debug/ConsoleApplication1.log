@@ -1,0 +1,8 @@
+﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(391,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (Chat.vcxproj, ConsoleApplication1.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  Server.cpp
+a:\uni\github\c++\project\consoleapplication1\consoleapplication1\server.cpp(60): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+a:\uni\github\c++\project\consoleapplication1\consoleapplication1\server.cpp(116): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+a:\uni\github\c++\project\consoleapplication1\consoleapplication1\server.cpp(154): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+a:\uni\github\c++\project\consoleapplication1\consoleapplication1\server.cpp(224): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+a:\uni\github\c++\project\consoleapplication1\consoleapplication1\server.cpp(233): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  ConsoleApplication1.vcxproj -> A:\Uni\GITHUB\C++\Project\ConsoleApplication1\x64\Debug\GameServer.exe
